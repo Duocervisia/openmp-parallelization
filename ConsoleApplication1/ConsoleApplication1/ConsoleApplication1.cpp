@@ -82,10 +82,16 @@
 
 #include "opencv2/opencv.hpp"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char* argv[]) {
+   //read path
+   if (argc < 2) {
+        std::cerr << "Error: No image path provided." << std::endl;
+        return 1;
+    }
+   std::string path = argv[1];
+
     // read image
-    cv::Mat image = cv::imread("C:\\top.jpg", cv::IMREAD_UNCHANGED);
+    cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
     // Check if the image was loaded successfully
     if (image.empty()) {
