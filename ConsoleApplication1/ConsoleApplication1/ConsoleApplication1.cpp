@@ -99,38 +99,61 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    int variant = 0;
+    if (argc > 2) {
+        try {
+            variant = std::stoi(argv[2]);
+        }
+        catch (const std::invalid_argument& e) {
+            std::cerr << "Error: Invalid variant argument. Must be an integer." << std::endl;
+        }
+    }
+
+
     //init new_image
 	cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
 
     //print image channels dynamically
 	printf("Image has %d channels\n", image.channels());
 
-
     // display and wait for a key-press, then close the window
     cv::imshow("image", image);
     int key = cv::waitKey(0);
     cv::destroyAllWindows();
 
-    internalImageConversion();
-
     double t0 = omp_get_wtime(); // start time
 
-    #pragma omp parallel for
-    for (int i = 0; i < image.rows; ++i) {
-        for (int j = 0; j < image.cols; ++j) {
+    switch (variant) {
+        case 0:
+            //Doppelte for-Schleife; Parallelisierung außen
+            #pragma omp parallel for
+            for (int i = 0; i < image.rows; ++i) {
+                for (int j = 0; j < image.cols; ++j) {
+                    convertImageToBlur(image, new_image, i, j);
+                }
+            }
+            break;
+        case 1:
+            //Doppelte for-Schleife; Parallelisierung innen
+            for (int i = 0; i < image.rows; ++i) {
+                #pragma omp parallel for
+                for (int j = 0; j < image.cols; ++j) {
+                    convertImageToBlur(image, new_image, i, j);
+                }
+            }
+            break;
+        case 2:
+            //Vereinte for-Schleife
+            #pragma omp parallel for
+            for (int index = 0; index < image.rows * image.cols; ++index) {
+                int i = index / image.cols; // Zeile
+                int j = index % image.cols; // Spalte
 
-            // get pixel at [i, j] as a <B,G,R> vector
-            cv::Vec3b pixel = image.at<cv::Vec3b>(i, j);
-
-            // extract the pixels as uchar (unsigned 8-bit) types (0..255)
-            uchar b = pixel[0];
-            uchar g = pixel[1];
-            uchar r = pixel[2];
-
-            convertImageToBlur(image, new_image, i, j);
-
-        }
+                convertImageToBlur(image, new_image, i, j);
+            }
+            break;
     }
+
     double t1 = omp_get_wtime();  // end time
 
     std::cout << "Processing took " << (t1 - t0) << " seconds" << std::endl;
