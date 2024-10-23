@@ -85,7 +85,7 @@
 int main(int argc, char** argv)
 {
     // read image
-    cv::Mat image = cv::imread("C:\\Untitled.png", cv::IMREAD_UNCHANGED);
+    cv::Mat image = cv::imread("C:\\top.jpg", cv::IMREAD_UNCHANGED);
 
     // Check if the image was loaded successfully
     if (image.empty()) {
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 
     double t0 = omp_get_wtime(); // start time
 
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < image.rows; ++i) {
         for (int j = 0; j < image.cols; ++j) {
 

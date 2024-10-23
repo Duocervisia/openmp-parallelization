@@ -11,34 +11,80 @@
  */
 void convertImageToBlur(cv::Mat image, cv::Mat new_image, int i, int j) {
 
-    // Check if the kernel fits
     if (i < 1 || j < 1 || i >= image.rows - 1 || j >= image.cols - 1) {
-        // For edge cases, copy the original pixel value
-        new_image.at<cv::Vec3b>(i, j) = image.at<cv::Vec3b>(i, j);
+        switch (image.channels()) {
+            case 1:
+                new_image.at<uchar>(i, j) = image.at<uchar>(i, j);
+				break;
+			case 3:
+				new_image.at<cv::Vec3b>(i, j) = image.at<cv::Vec3b>(i, j);
+				break;
+			case 4:
+				new_image.at<cv::Vec4b>(i, j) = image.at<cv::Vec4b>(i, j);
+				break;
+			default:
+				throw std::runtime_error("Unsupported number of image channels");
+        }
         return;
     }
 
-    // Calculate the sum of the 3i3 kernel
-    cv::Vec3i sum = cv::Vec3i(image.at<cv::Vec3b>(i - 1, j + 1)) + // Top left
-        cv::Vec3i(image.at<cv::Vec3b>(i + 0, j + 1)) + // Top center
-        cv::Vec3i(image.at<cv::Vec3b>(i + 1, j + 1)) + // Top right
-        cv::Vec3i(image.at<cv::Vec3b>(i - 1, j + 0)) + // Mid left
-        cv::Vec3i(image.at<cv::Vec3b>(i + 0, j + 0)) + // Current pixel
-        cv::Vec3i(image.at<cv::Vec3b>(i + 1, j + 0)) + // Mid right
-        cv::Vec3i(image.at<cv::Vec3b>(i - 1, j - 1)) + // Low left
-        cv::Vec3i(image.at<cv::Vec3b>(i + 0, j - 1)) + // Low center
-        cv::Vec3i(image.at<cv::Vec3b>(i + 1, j - 1));  // Low right
+    switch (image.channels()) {
+        case 1: { // Grayscale image
+            int sum = image.at<uchar>(i - 1, j + 1) +
+                image.at<uchar>(i, j + 1) +
+                image.at<uchar>(i + 1, j + 1) +
+                image.at<uchar>(i - 1, j) +
+                image.at<uchar>(i, j) +
+                image.at<uchar>(i + 1, j) +
+                image.at<uchar>(i - 1, j - 1) +
+                image.at<uchar>(i, j - 1) +
+                image.at<uchar>(i + 1, j - 1);
 
-    cv::Vec3b average;
-    average[0] = cv::saturate_cast<uchar>(sum[0] / 9);
-    average[1] = cv::saturate_cast<uchar>(sum[1] / 9);
-    average[2] = cv::saturate_cast<uchar>(sum[2] / 9);
+            uchar average = cv::saturate_cast<uchar>(sum / 9);
+            new_image.at<uchar>(i, j) = average;
+            break;
+        }
+        case 3: { // RGB image
+            cv::Vec3i sum = cv::Vec3i(image.at<cv::Vec3b>(i - 1, j + 1)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i, j + 1)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i + 1, j + 1)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i - 1, j)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i, j)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i + 1, j)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i - 1, j - 1)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i, j - 1)) +
+                cv::Vec3i(image.at<cv::Vec3b>(i + 1, j - 1));
 
-    
- //   cv::Vec3b original = image.at<cv::Vec3b>(i + 0, j + 0);
-	//printf("Original Pixel of the 3x3 kernel: %d, %d, %d\n", original[0], original[1], original[2]);
-	//printf("Sum of the 3x3 kernel: %d, %d, %d\n", sum[0], sum[1], sum[2]);
-	//printf("Average of the 3x3 kernel: %d, %d, %d\n", average[0], average[1], average[2]);
+            cv::Vec3b average;
+            average[0] = cv::saturate_cast<uchar>(sum[0] / 9);
+            average[1] = cv::saturate_cast<uchar>(sum[1] / 9);
+            average[2] = cv::saturate_cast<uchar>(sum[2] / 9);
 
-    new_image.at<cv::Vec3b>(i, j) = average;
+            new_image.at<cv::Vec3b>(i, j) = average;
+            break;
+        }
+        case 4: { // RGBA image
+            cv::Vec4i sum = cv::Vec4i(image.at<cv::Vec4b>(i - 1, j + 1)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i, j + 1)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i + 1, j + 1)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i - 1, j)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i, j)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i + 1, j)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i - 1, j - 1)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i, j - 1)) +
+                cv::Vec4i(image.at<cv::Vec4b>(i + 1, j - 1));
+
+            cv::Vec4b average;
+            average[0] = cv::saturate_cast<uchar>(sum[0] / 9);
+            average[1] = cv::saturate_cast<uchar>(sum[1] / 9);
+            average[2] = cv::saturate_cast<uchar>(sum[2] / 9);
+            average[3] = cv::saturate_cast<uchar>(sum[3] / 9);
+
+            new_image.at<cv::Vec4b>(i, j) = average;
+            break;
+        }
+        default:
+            // Handle unexpected number of channels
+            throw std::runtime_error("Unsupported number of image channels");
+    }
 }
