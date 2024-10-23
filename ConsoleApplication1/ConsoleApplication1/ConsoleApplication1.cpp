@@ -77,11 +77,12 @@
 #include <iostream>
 #include <cstdio>
 #include <omp.h>
+#include "RgbToHsv.h"
+#include "ImageToBlur.h"
 
 #include "opencv2/opencv.hpp"
 
 int main(int argc, char** argv)
-
 {
     // read image
     cv::Mat image = cv::imread("C:\\top.jpg", cv::IMREAD_UNCHANGED);
@@ -96,6 +97,9 @@ int main(int argc, char** argv)
     cv::imshow("image", image);
     int key = cv::waitKey(0);
     cv::destroyAllWindows();
+
+    internalImageConversion();
+    convertImageToBlur();
 
     double t0 = omp_get_wtime(); // start time
 
