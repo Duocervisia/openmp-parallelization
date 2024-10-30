@@ -77,6 +77,9 @@
 #include <iostream>
 #include <cstdio>
 #include <omp.h>
+#include <opencv4/opencv2/core.hpp>
+#include <opencv4/opencv2/core/hal/interface.h>
+#include <opencv4/opencv2/imgproc.hpp>
 #include "RgbToHsv.h"
 #include "ImageToBlur.h"
 
@@ -98,22 +101,38 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: Could not open or find the image." << std::endl;
         return -1;
     }
-
-    //init new_image
-	cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
-
+    double t0;
+  
     //print image channels dynamically
-	printf("Image has %d channels\n", image.channels());
-
+   	printf("Image has %d channels\n", image.channels());
 
     // display and wait for a key-press, then close the window
     cv::imshow("image", image);
     int key = cv::waitKey(0);
     cv::destroyAllWindows();
 
-    internalImageConversion();
+	  cv::Mat hsvImage = cv::Mat::zeros(image.size(),CV_8UC3);
+    t0 = omp_get_wtime(); // start time
+    imageToHsv(image, hsvImage);
+    std::cout << "No parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
+    t0 = omp_get_wtime(); // start time
+    imageToHsvParallelOuter(image, hsvImage);
+    std::cout << "Outer loop parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
+    t0 = omp_get_wtime(); // start time
+    imageToHsvParallelInner(image, hsvImage);
+    std::cout << "Inner loop parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
+	  // cv::Mat rgbImage = cv::Mat::zeros(image.size(), image.type());
+    // cv::cvtColor(hsvImage, rgbImage,cv::COLOR_HSV2BGR);
+    // cv::subtract(rgbImage, image, rgbImage);
 
-    double t0 = omp_get_wtime(); // start time
+    cv::imshow("image", hsvImage);
+    key = cv::waitKey(0);
+    cv::destroyAllWindows();
+
+    //init new_image
+	  cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
+
+    t0 = omp_get_wtime(); // start time
 
     #pragma omp parallel for
     for (int i = 0; i < image.rows; ++i) {
