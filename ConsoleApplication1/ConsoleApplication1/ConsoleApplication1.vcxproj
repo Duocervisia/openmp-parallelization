@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConsoleApplication1.cpp" />
+    <ClCompile Include="ImageHelper.cpp" />
     <ClCompile Include="ImageToBlur.cpp" />
     <ClCompile Include="RgbToHsv.cpp" />
   </ItemGroup>
@@ -148,6 +149,7 @@
     <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ImageHelper.h" />
     <ClInclude Include="ImageToBlur.h" />
     <ClInclude Include="RgbToHsv.h" />
   </ItemGroup>

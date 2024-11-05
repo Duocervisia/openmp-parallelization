@@ -4,5 +4,6 @@
 
 // Function to convert an image
 void convertImageToBlur(cv::Mat image, cv::Mat new_image, int i, int j);
+void compareImageToBlur(cv::Mat image, cv::Mat new_image);
 
 #endif // IMAGETOBLUR_H

@@ -1,10 +1,11 @@
 ﻿  ConsoleApplication1.cpp
-C:\Users\tobia\source\repos\openmp-parallelization\ConsoleApplication1\ConsoleApplication1\ConsoleApplication1.cpp(120,45): warning C4101: 'e': unreferenced local variable
-  RgbToHsv.cpp
+C:\Users\tobia\source\repos\openmp-parallelization\ConsoleApplication1\ConsoleApplication1\ConsoleApplication1.cpp(50,45): warning C4101: 'e': unreferenced local variable
+  ImageHelper.cpp
+  ImageToBlur.cpp
   Generating code
-  25 of 150 functions (16.7%) were compiled, the rest were copied from previous compilation.
-    23 functions were new in current compilation
-    2 functions had inline decision re-evaluated but remain unchanged
+  13 of 160 functions ( 8.1%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    6 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   ConsoleApplication1.vcxproj -> C:\Users\tobia\source\repos\openmp-parallelization\ConsoleApplication1\x64\Release\ConsoleApplication1.exe
   C:\OpenCV\opencv\build\x64\vc16\bin\opencv_world4100.dll

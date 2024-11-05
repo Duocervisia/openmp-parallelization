@@ -1,94 +1,24 @@
-//#include <iostream>
-//#include <omp.h>
-//#include <opencv2/opencv.hpp>
-
-//int main()
-//{
-//    int sum = 0;
-//    printf("Sum = %d\n", sum);
-//
-//    double time_start = omp_get_wtime();
-//
-//	int width = 10;
-//	int height = 10;
-//
-//    #pragma omp parallel for collapse(2) #Ab version 2.x
-//
-//	for (int i = 0; i < height; i++)
-//	{
-//		for (int j = 0; j < width; j++)
-//		{
-//			printf("i = %d, j = %d\n", i, j);
-//		}
-//	}
-//
-//	int j = 0;
-//
-//	//Testen was schneller ist (eine for Schleife parallelisieren, zwei ineinander verschachteln, mit collapse und wie hier drunter)
-//
-//	#pragma omp parallel for
-//	for (int i = 0; i < width * height; i++)
-//	{
-//		int j = i % width;
-//		int i2 = i - (j * width);
-//	}
-//
-//
-//    #pragma omp parallel for
-//    for (int i = 0; i < 100000000; i++)
-//    {
-//        #pragma omp atomic
-//        sum++;
-//        
-//    }
-//	printf("Sum = %d\n", sum);
-//
-//
-//    double time_end = omp_get_wtime();
-//    double time_diff = time_end - time_start;
-//    printf("Program worked for %f seconds\n", time_diff);
-//}
-
-//int main() {
-//	printf("Hello World\n");
-//
-//
-//	//channels 4 = rgba, 3 = rgb, 1 = grayscale
-//	if (image.channels() == 1) {
-//		printf("Image has 1 channel\n");
-//	}
-//	else if (image.channels() == 3) {
-//		printf("Image has 3 channels\n");
-//	}
-//	else {
-//		printf("Image has %d channels\n", image.channels());
-//	}
-//
-//	//Überprüfung der converteirung mit hsv konvertierung von cv selbst
-//	cv::Mat hsv_image;
-//	cv::cvtColor(image, hsv_image, cv::COLOR_BGR2HSV);
-//
-//	cv::Mat diff = new_image - new_image2
-//
-//		//Für Bericht, überprüfung der Abweichungen integrieren
-//		//Laufzeit gegenüber anzahl der Threads als Graphen darstellen
-//}
-
 #include <iostream>
 #include <cstdio>
 #include <omp.h>
-#include <opencv4/opencv2/core.hpp>
-#include <opencv4/opencv2/core/hal/interface.h>
-#include <opencv4/opencv2/imgproc.hpp>
 
-//#include <opencv2/core.hpp>
-//#include <opencv2/core/hal/interface.h>
-//#include <opencv2/imgproc.hpp>
+//Kommentiere ein für Ben
+//#include <opencv4/opencv2/core.hpp>
+//#include <opencv4/opencv2/core/hal/interface.h>
+//#include <opencv4/opencv2/imgproc.hpp>
+// 
+//Kommentiere aus für Ben
+#include <opencv2/core.hpp>
+#include <opencv2/core/hal/interface.h>
+#include <opencv2/imgproc.hpp>
 
 #include "RgbToHsv.h"
 #include "ImageToBlur.h"
 
 #include "opencv2/opencv.hpp"
+
+// Forward declaration of showDiff function
+void showDiff(cv::Mat diff);
 
 int main(int argc, char* argv[]) {
   double t0;
@@ -127,7 +57,7 @@ int main(int argc, char* argv[]) {
     int key = cv::waitKey(0);
     cv::destroyAllWindows();
 
-	  cv::Mat hsvImage = cv::Mat::zeros(image.size(),CV_8UC3);
+	cv::Mat hsvImage = cv::Mat::zeros(image.size(),CV_8UC3);
     t0 = omp_get_wtime(); // start time
     imageToHsv(image, hsvImage);
     std::cout << "No parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
@@ -137,7 +67,7 @@ int main(int argc, char* argv[]) {
     t0 = omp_get_wtime(); // start time
     imageToHsvParallelInner(image, hsvImage);
     std::cout << "Inner loop parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
-	  // cv::Mat rgbImage = cv::Mat::zeros(image.size(), image.type());
+	// cv::Mat rgbImage = cv::Mat::zeros(image.size(), image.type());
     // cv::cvtColor(hsvImage, rgbImage,cv::COLOR_HSV2BGR);
     // cv::subtract(rgbImage, image, rgbImage);
 
@@ -146,7 +76,7 @@ int main(int argc, char* argv[]) {
     cv::destroyAllWindows();
 
     //init new_image
-	  cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
+	cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
 
     t0 = omp_get_wtime(); // start time
 
@@ -188,5 +118,8 @@ int main(int argc, char* argv[]) {
     // display and wait for a key-press, then close the window
     cv::imshow("image", new_image);
     key = cv::waitKey(0);
+
+	compareImageToBlur(image, new_image);
+
     cv::destroyAllWindows();
 }

@@ -1,6 +1,8 @@
 #include <iostream>
 #include "ImageToBlur.h"
 #include "opencv2/opencv.hpp"
+#include "ImageHelper.h"
+
 
 
 /*
@@ -87,4 +89,19 @@ void convertImageToBlur(cv::Mat image, cv::Mat new_image, int i, int j) {
             // Handle unexpected number of channels
             throw std::runtime_error("Unsupported number of image channels");
     }
+}
+
+void compareImageToBlur(cv::Mat image, cv::Mat new_image) {
+	// Create a kernel for box blur
+	cv::Mat kernel = cv::Mat::ones(3, 3, CV_32F) / 9.0;
+
+	// Apply the box blur using filter2D
+	cv::Mat dst;
+	cv::filter2D(image, dst, -1, kernel, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+
+	// Calculate the difference between the two images
+	cv::Mat diff = new_image - dst;
+
+	// Show the difference
+	showDiff(diff);
 }
