@@ -2,12 +2,6 @@
 #include <cstdio>
 #include <omp.h>
 
-//Kommentiere ein für Ben
-//#include <opencv4/opencv2/core.hpp>
-//#include <opencv4/opencv2/core/hal/interface.h>
-//#include <opencv4/opencv2/imgproc.hpp>
-// 
-//Kommentiere aus für Ben
 #include <opencv2/core.hpp>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/imgproc.hpp>
