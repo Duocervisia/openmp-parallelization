@@ -4,3 +4,4 @@ ConsoleApplication1/ConsoleApplication1/build/
 *.png
 *.jpeg
 *.jpg
+!images/*
