@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdio>
 #include <omp.h>
+#include <algorithm> 
+#include <iterator> 
+#include <numeric> 
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/hal/interface.h>
@@ -10,21 +13,73 @@
 #include "RgbToHsv.h"
 #include "ImageToBlur.h"
 
+static const std::map<std::string, void(*)(cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage)> testFunctions = {
+  {"noParallelization", [](cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage) { 
+    for (int i = 0; i < image.rows; ++i) {
+      for (int j = 0; j < image.cols; ++j) {
+        convertImageToBlur(image, bluredImage, i, j);
+        pixelToHsv(image.at<cv::Vec3b>(i, j),hsvImage.at<cv::Vec3b>(i, j));
+      }
+    }
+  }},
+  {"outerParallelization", [](cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage) { 
+    #pragma omp parallel for
+    for (int i = 0; i < image.rows; ++i) {
+      for (int j = 0; j < image.cols; ++j) {
+        convertImageToBlur(image, bluredImage, i, j);
+        pixelToHsv(image.at<cv::Vec3b>(i, j),hsvImage.at<cv::Vec3b>(i, j));
+      }
+    }
+  }},
+  {"innerParallelization", [](cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage) { 
+    for (int i = 0; i < image.rows; ++i) {
+      #pragma omp parallel for
+      for (int j = 0; j < image.cols; ++j) {
+        convertImageToBlur(image, bluredImage, i, j);
+        pixelToHsv(image.at<cv::Vec3b>(i, j),hsvImage.at<cv::Vec3b>(i, j));
+      }
+    }
+  }},
+  {"oneLoopParallelization", [](cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage) { 
+    #pragma omp parallel for
+    for (int index = 0; index < image.rows * image.cols; ++index) {
+      int i = index / image.cols; 
+      int j = index % image.cols;
+      convertImageToBlur(image, bluredImage, i, j);
+      pixelToHsv(image.at<cv::Vec3b>(i, j),hsvImage.at<cv::Vec3b>(i, j));
+    }
+  }}
+};
 
-// Forward declaration of showDiff function
-void showDiff(cv::Mat diff);
-
-int main(int argc, char* argv[]) {
+void benchmarkImage(cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage, int repetitionsPerTest){
   double t0;
 
-   //read path
-   if (argc < 2) {
-        std::cerr << "Error: No image path provided." << std::endl;
-        return 1;
+  for(const auto& [testName, func] : testFunctions) { 
+    std::vector<double> runtimes;
+    for (int i = 0; i < repetitionsPerTest; i++) {
+      t0 = omp_get_wtime(); 
+      func(image,hsvImage, bluredImage);
+      runtimes.push_back(omp_get_wtime() - t0);
     }
-   std::string path = argv[1];
+    std::cout << testName << ": " << std::endl;
+    std::copy(runtimes.begin(), runtimes.end(), std::ostream_iterator<double>(std::cout, ", ")); std::cout << std::endl; 
+    std::cout << "avg:" << 1.0 * std::accumulate(runtimes.begin(), runtimes.end(), 0.0) / runtimes.size() << std::endl << std::endl;
+  }
+}
 
+
+int main(int argc, char* argv[]) {
+
+  if (argc < 2) {
+    std::cerr << "Error: No image paths provided." << std::endl;
+    return 1;
+  }
+
+  for (int i = 1; i < argc; i++) {
     // read image
+    std::string path = argv[i];
+    std::cout << "Read image: "<< path << std::endl;
+
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
     // Check if the image was loaded successfully
@@ -32,88 +87,13 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: Could not open or find the image." << std::endl;
         return -1;
     }
-  
-    //print image channels dynamically
-   	printf("Image has %d channels\n", image.channels());
-
-    int variant = 0;
-    if (argc > 2) {
-        try {
-            variant = std::stoi(argv[2]);
-        }
-        catch (const std::invalid_argument& e) {
-            std::cerr << "Error: Invalid variant argument. Must be an integer." << std::endl;
-        }
+    if (image.channels() != 3) {
+        std::cerr << "Error: Image has more or less than 3 channels." << std::endl;
+        return -1;
     }
-
-    // display and wait for a key-press, then close the window
-    cv::imshow("image", image);
-    int key = cv::waitKey(0);
-    cv::destroyAllWindows();
-
-	cv::Mat hsvImage = cv::Mat::zeros(image.size(),CV_8UC3);
-    t0 = omp_get_wtime(); // start time
-    imageToHsv(image, hsvImage);
-    std::cout << "No parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
-    t0 = omp_get_wtime(); // start time
-    imageToHsvParallelOuter(image, hsvImage);
-    std::cout << "Outer loop parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
-    t0 = omp_get_wtime(); // start time
-    imageToHsvParallelInner(image, hsvImage);
-    std::cout << "Inner loop parallel processing took " << (omp_get_wtime() - t0) << " seconds" << std::endl;
-	// cv::Mat rgbImage = cv::Mat::zeros(image.size(), image.type());
-    // cv::cvtColor(hsvImage, rgbImage,cv::COLOR_HSV2BGR);
-    // cv::subtract(rgbImage, image, rgbImage);
-
-    cv::imshow("image", hsvImage);
-    key = cv::waitKey(0);
-    cv::destroyAllWindows();
-
-    //init new_image
-	cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
-
-    t0 = omp_get_wtime(); // start time
-
-    switch (variant) {
-        case 0:
-            //Doppelte for-Schleife; Parallelisierung außen
-            #pragma omp parallel for
-            for (int i = 0; i < image.rows; ++i) {
-                for (int j = 0; j < image.cols; ++j) {
-                    convertImageToBlur(image, new_image, i, j);
-                }
-            }
-            break;
-        case 1:
-            //Doppelte for-Schleife; Parallelisierung innen
-            for (int i = 0; i < image.rows; ++i) {
-                #pragma omp parallel for
-                for (int j = 0; j < image.cols; ++j) {
-                    convertImageToBlur(image, new_image, i, j);
-                }
-            }
-            break;
-        case 2:
-            //Vereinte for-Schleife
-            #pragma omp parallel for
-            for (int index = 0; index < image.rows * image.cols; ++index) {
-                int i = index / image.cols; // Zeile
-                int j = index % image.cols; // Spalte
-
-                convertImageToBlur(image, new_image, i, j);
-            }
-            break;
-    }
-
-    double t1 = omp_get_wtime();  // end time
-
-    std::cout << "Processing took " << (t1 - t0) << " seconds" << std::endl;
-
-    // display and wait for a key-press, then close the window
-    cv::imshow("image", new_image);
-    key = cv::waitKey(0);
-
-	compareImageToBlur(image, new_image);
-
-    cv::destroyAllWindows();
+	  cv::Mat hsvImage = cv::Mat::zeros(image.size(), image.type());
+	  cv::Mat bluredImage = cv::Mat::zeros(image.size(), image.type());
+    benchmarkImage(image, hsvImage, bluredImage, 20);
+  }
+  return 0;
 }

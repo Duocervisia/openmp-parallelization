@@ -8,5 +8,6 @@
 void imageToHsv(cv::Mat image, cv::Mat outputImage);
 void imageToHsvParallelInner(cv::Mat image, cv::Mat outputImage);
 void imageToHsvParallelOuter(cv::Mat image, cv::Mat outputImage);
+void pixelToHsv(cv::Vec3b& orgPixel,cv::Vec3b& newPixel);
 
 #endif // RGBTOHSV_H
