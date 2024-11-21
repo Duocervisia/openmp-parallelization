@@ -5,7 +5,9 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/imgproc.hpp>
+#include <opencv4/opencv2/imgproc.hpp>
 
+#include "ImageHelper.h"
 #include "RgbToHsv.h"
 #include "ImageToBlur.h"
 
@@ -90,4 +92,9 @@ int main(int argc, char* argv[]) {
     cv::imshow("hsv image", hsv_image);
     cv::waitKey(0);
 	  cv::destroyAllWindows();
+
+	  cv::Mat hsv_compare_image = cv::Mat::zeros(org_image.size(), org_image.type());
+    cv::cvtColor(org_image, hsv_compare_image,cv::COLOR_BGR2HSV);
+    cv::subtract(hsv_compare_image, hsv_image, hsv_compare_image);
+    showDiff(hsv_compare_image);
 }
