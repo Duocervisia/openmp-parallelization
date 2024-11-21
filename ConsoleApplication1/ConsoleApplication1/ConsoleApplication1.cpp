@@ -11,9 +11,6 @@
 
 #include "opencv2/opencv.hpp"
 
-// Forward declaration of showDiff function
-void showDiff(cv::Mat diff);
-
 int main(int argc, char* argv[]) {
     //read path
     if (argc < 2) {
