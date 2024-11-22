@@ -12,7 +12,7 @@
 
 #include "RgbToHsv.h"
 #include "ImageToBlur.h"
-#include "parallelization.cpp"
+#include "Parallelization.cpp"
 
 
 void benchmarkImage(cv::Mat image, cv::Mat hsvImage, cv::Mat bluredImage, int repetitionsPerTest){

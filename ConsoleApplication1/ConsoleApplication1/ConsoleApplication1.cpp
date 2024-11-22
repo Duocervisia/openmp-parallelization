@@ -12,7 +12,7 @@
 #include "ImageToBlur.h"
 
 #include "opencv2/opencv.hpp"
-#include "parallelization.cpp"
+#include "Parallelization.cpp"
 
 int main(int argc, char* argv[]) {
     //read path
