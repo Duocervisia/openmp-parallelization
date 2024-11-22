@@ -12,6 +12,7 @@
 #include "ImageToBlur.h"
 
 #include "opencv2/opencv.hpp"
+#include "parallelization.cpp"
 
 int main(int argc, char* argv[]) {
     //read path
@@ -46,36 +47,20 @@ int main(int argc, char* argv[]) {
 	  cv::Mat blured_image = cv::Mat::zeros(org_image.size(), org_image.type());
 	  cv::Mat hsv_image = cv::Mat::zeros(org_image.size(),CV_8UC3);
 
+  std::cout << parallelizationFunctions.size() << std::endl;
+
     switch (variant) {
         case 0:
             //Doppelte for-Schleife; Parallelisierung außen
-            #pragma omp parallel for
-            for (int i = 0; i < org_image.rows; ++i) {
-                for (int j = 0; j < org_image.cols; ++j) {
-                    convertImageToBlur(org_image, blured_image, i, j);
-                    pixelToHsv(org_image.at<cv::Vec3b>(i, j),hsv_image.at<cv::Vec3b>(i, j));
-                }
-            }
+            parallelizationFunctions.at("outerParallelization")(org_image,hsv_image,blured_image);
             break;
         case 1:
             //Doppelte for-Schleife; Parallelisierung innen
-            for (int i = 0; i < org_image.rows; ++i) {
-                #pragma omp parallel for
-                for (int j = 0; j < org_image.cols; ++j) {
-                    convertImageToBlur(org_image, blured_image, i, j);
-                    pixelToHsv(org_image.at<cv::Vec3b>(i, j),hsv_image.at<cv::Vec3b>(i, j));
-                }
-            }
+            parallelizationFunctions.at("innerParallelization")(org_image,hsv_image,blured_image);
             break;
         case 2:
             //Vereinte for-Schleife
-            #pragma omp parallel for
-            for (int index = 0; index < org_image.rows * org_image.cols; ++index) {
-                int i = index / org_image.cols; // Zeile
-                int j = index % org_image.cols; // Spalte
-                convertImageToBlur(org_image, blured_image, i, j);
-                pixelToHsv(org_image.at<cv::Vec3b>(i, j),hsv_image.at<cv::Vec3b>(i, j));
-            }
+            parallelizationFunctions.at("oneLoopParallelization")(org_image,hsv_image,blured_image);
             break;
     }
 
