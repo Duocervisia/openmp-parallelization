@@ -5,10 +5,6 @@
 
 #include "RgbToHsv.h"
 
-double normalize(uchar value){
-  return value/255.0;
-}
-
 double getHue(double cmax, double cmin,double diff, double r, double g, double b){
   if(cmax == cmin) return 0.0;
   if(cmax == r) return fmod(((60.0 * ((g - b) / diff)) + 360.0), 360.0);
@@ -17,10 +13,9 @@ double getHue(double cmax, double cmin,double diff, double r, double g, double b
 }
 
 void pixelToHsv(cv::Vec3b& orgPixel,cv::Vec3b& newPixel) {
-  // extract the pixels as normalized rgb values
-  double b = normalize(orgPixel[0]);
-  double g = normalize(orgPixel[1]);
-  double r = normalize(orgPixel[2]);
+  double b = orgPixel[0]/255.0;
+  double g = orgPixel[1]/255.0;
+  double r = orgPixel[2]/255.0;
 
   double cmax = std::max({r, g,b});
   double cmin = std::min({r, g, b});
